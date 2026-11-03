@@ -1,40 +1,36 @@
-# TactiCode (prototype Android)
+# TactiCode (jeu HTML + APK Android)
 
-Prototype Kotlin + Jetpack Compose du jeu tactique offline-first avec salles privées par code.
+Jeu tactique multijoueur (2 à 8 joueurs) avec **code de salle** et **chat vocal (micro)**.
+Le jeu est dans `www/index.html`. GitHub Actions le transforme en APK avec Capacitor.
 
-## Générer l APK avec GitHub (sans Android Studio)
+## Faire l APK avec GitHub
 
-1. Crée un dépôt vide sur GitHub (ex. `TactiCode`).
-2. Décompresse ce ZIP, puis envoie TOUT le contenu à la racine du dépôt
-   (y compris le dossier caché `.github`). Sur le site GitHub : *Add file > Upload files*,
-   ou en ligne de commande :
-   ```
-   git init && git add . && git commit -m "init"
-   git branch -M main
-   git remote add origin https://github.com/TON_NOM/TactiCode.git
-   git push -u origin main
-   ```
-3. Ouvre l onglet **Actions** : le workflow **Build APK** démarre tout seul
-   (ou clique sur *Run workflow*). Compte 3 à 6 minutes.
-4. Quand il est vert, ouvre le run et télécharge **TactiCode-debug-apk** en bas
-   (section *Artifacts*). Décompresse-le pour obtenir `app-debug.apk`.
-5. Copie l APK sur ton téléphone et installe-le
-   (autorise « Installer des applications inconnues »).
+1. Crée un dépôt GitHub vide.
+2. Décompresse ce ZIP et envoie TOUT à la racine du dépôt (avec le dossier caché `.github`).
+3. Onglet **Actions** > **Build Android APK** (se lance seul, ou *Run workflow*). 5 à 10 minutes.
+4. Télécharge **TactiCode-APK** (section *Artifacts*), décompresse, installe `app-debug.apk`.
+5. Au premier lancement, accepte la permission **Micro**.
 
-## Ce que contient le prototype
+## Tester sans APK
 
-- Accueil, saisie du code (6 cases + clavier sans caractères ambigus, bouton Coller)
-- Création de salle (code généré, Copier, Partager)
-- Lobby avec joueurs simulés, ping, ready check
-- Maquette de HUD (minimap, zone, santé, munitions, ping, compteur de données)
-- Astuce de démo : le code AAAAAA affiche l état d erreur « Room not found »
+Ouvre `www/index.html` dans Chrome (ou sur un petit serveur local). Le mode Practice marche tout de suite.
 
-## Pas encore implémenté
+## Comment jouer à plusieurs
 
-Le réseau réel (P2P local, relais, chiffrement par code) : les joueurs du lobby sont
-simulés dans `LobbyScreen`. Prochaine étape : ajouter les permissions réseau dans
-`AndroidManifest.xml` et une couche de transport (UDP / Nearby Connections).
+- Joueur 1 : **CREATE ROOM**, il reçoit un code (ex. K7M4QX) et le partage.
+- Joueurs 2 à 8 : tapent le code et **JOIN**.
+- Le host lance **START MATCH**. Dernier survivant gagne.
+- Contrôles tactile : stick gauche = bouger, stick droit = viser et tirer. PC : WASD + souris.
 
-## Palette
+## Réseau et data (important)
 
-Fond #0F172A, surface #1E293B, accent #10B981 (voir `MainActivity.kt`).
+- Le jeu et la voix passent en **WebRTC pair-à-pair** (PeerJS). Un petit service de rencontre PeerJS
+  est utilisé uniquement pour établir la connexion (quelques Ko). **Il faut donc un accès internet
+  au moment de rejoindre.** Le mode Practice marche 100 % hors ligne.
+- Le chat vocal consomme plus que le jeu lui-même. Sur un même Wi-Fi / hotspot, le trafic reste
+  entre les téléphones, mais à tester sur tes appareils (comportement variable selon les réseaux).
+- Pour du vrai 100 % hors ligne, la prochaine étape est le plugin Nearby Connections / Wi-Fi Direct.
+
+## Personnaliser
+
+Icône de l app : ajoute `@capacitor/assets`. Verrouiller l orientation : modifie le manifest dans le workflow.

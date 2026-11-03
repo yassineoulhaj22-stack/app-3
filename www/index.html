@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>TactiCode</title>
+<style>
+:root{--bg:#0F172A;--sf:#1E293B;--rs:#273449;--bd:#334155;--ac:#10B981;--t1:#F8FAFC;--t2:#94A3B8;--wn:#F59E0B;--dg:#EF4444;--in:#38BDF8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--t1);font:15px/1.4 system-ui,Roboto,sans-serif;overflow:hidden;touch-action:none}
+.scr{position:fixed;inset:0;display:none;flex-direction:column;gap:10px;padding:max(18px,env(safe-area-inset-top)) 20px max(18px,env(safe-area-inset-bottom));overflow:auto;touch-action:pan-y}
+.scr.on{display:flex}
+h1{margin:4px 0 0;font-size:34px;color:var(--ac)}h2{margin:0;font-size:24px}
+.mut{color:var(--t2);margin:0}.err{color:var(--dg);min-height:20px;margin:0}
+.chip{align-self:flex-start;display:flex;gap:8px;align-items:center;background:var(--sf);border:1px solid var(--bd);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:600}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--ac)}
+label{font-size:12px;color:var(--t2);margin-top:6px}
+input{background:var(--sf);border:1px solid var(--bd);border-radius:10px;color:var(--t1);font-size:18px;padding:14px;width:100%;outline:none;user-select:text;-webkit-user-select:text}
+input:focus{border-color:var(--ac)}
+input.code{font-family:ui-monospace,monospace;letter-spacing:6px;text-transform:uppercase;font-weight:700;text-align:center}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}.row>.fit{flex:0 0 auto}
+.b{border:0;border-radius:12px;height:54px;font-size:15px;font-weight:700;letter-spacing:1px;cursor:pointer;padding:0 18px;width:100%}
+.b.p{background:var(--ac);color:var(--bg)}.b.s{background:none;border:1.5px solid var(--ac);color:var(--ac)}
+.b.g{background:none;color:var(--t2);font-weight:500}.b.d{background:none;color:var(--dg);height:40px}
+.b:disabled{background:var(--rs);color:var(--t2);border:0}
+.big{font:700 40px ui-monospace,monospace;color:var(--ac);text-align:center;background:var(--sf);border:2px solid var(--ac);border-radius:16px;padding:18px 0;letter-spacing:4px}
+.pl{display:flex;align-items:center;gap:10px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:10px 12px}
+.pl b{width:30px;height:30px;border-radius:50%;background:var(--rs);color:var(--ac);display:grid;place-items:center}
+.pl span{flex:1}.pl em{font-style:normal;font-size:11px;color:var(--t2)}
+#game{padding:0;gap:0;overflow:hidden}
+#cv{position:absolute;inset:0}
+.hud{position:absolute;background:rgba(15,23,42,.88);border-radius:4px;padding:6px 10px;font:700 12px ui-monospace,monospace;pointer-events:none}
+#mm{position:absolute;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));width:96px;height:96px;background:rgba(15,23,42,.9);border:1px solid var(--bd);border-radius:8px}
+#zt{top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:14px}
+#nt{top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));text-align:right;color:var(--t2)}
+#hp{left:max(14px,env(safe-area-inset-left));bottom:150px}
+#hp div{width:150px;height:8px;background:var(--rs);margin-top:4px}#hp i{display:block;height:100%;background:var(--ac);width:100%}
+#am{right:max(14px,env(safe-area-inset-right));bottom:150px;font-size:20px}
+.hb{position:absolute;z-index:5;border:0;border-radius:6px;background:rgba(15,23,42,.88);color:var(--t1);font:700 12px system-ui;padding:10px 12px}
+#bm{top:max(60px,calc(env(safe-area-inset-top) + 50px));right:max(10px,env(safe-area-inset-right))}
+#bl{top:max(104px,calc(env(safe-area-inset-top) + 94px));right:max(10px,env(safe-area-inset-right));color:var(--dg)}
+.zone{position:absolute;bottom:0;height:55%;width:50%;z-index:2;touch-action:none}
+#sl{left:0}#sr{right:0}
+.base{display:none;position:fixed;width:100px;height:100px;border-radius:50%;border:2px solid var(--bd);background:rgba(15,23,42,.5);z-index:3;pointer-events:none}
+.knob{position:absolute;left:30px;top:30px;width:40px;height:40px;border-radius:50%;background:var(--ac)}
+#el{position:absolute;bottom:40%;width:100%;text-align:center;color:var(--dg);font-weight:700;display:none}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--rs);border:1px solid var(--bd);padding:10px 16px;border-radius:10px;z-index:9;display:none;max-width:90%}
+</style></head><body>
+
+<div id="menu" class="scr on">
+ <div class="chip"><i></i>Practice works offline</div>
+ <h1>TactiCode</h1><p class="mut">Squad up with a room code. Voice chat included.</p>
+ <label>Nickname</label><input id="nm" maxlength="12" placeholder="Your name">
+ <label>Room code</label>
+ <div class="row"><input id="cd" class="code" maxlength="6" placeholder="K7M4QX" autocapitalize="characters" autocomplete="off"><button class="b p fit" id="bj" style="width:110px">JOIN</button></div>
+ <button class="b s" id="bc">CREATE ROOM</button>
+ <button class="b g" id="bp">Practice vs bots (offline)</button>
+ <p id="msg" class="err"></p>
+</div>
+
+<div id="lobby" class="scr">
+ <p class="mut">Room code</p>
+ <div class="big" id="lc">------</div>
+ <div class="row"><button class="b s" id="lcp">COPY</button><button class="b s" id="lsh">SHARE</button></div>
+ <div id="plist" style="display:flex;flex-direction:column;gap:8px"></div>
+ <button class="b s" id="lmic">MIC: ON</button>
+ <div style="flex:1"></div>
+ <button class="b p" id="lgo">START MATCH</button>
+ <button class="b d" id="llv">Leave room</button>
+</div>
+
+<div id="game" class="scr">
+ <canvas id="cv"></canvas><canvas id="mm" width="96" height="96"></canvas>
+ <div class="hud" id="zt">ZONE 0:00</div><div class="hud" id="nt">-</div>
+ <div class="hud" id="hp">HP 100<div><i></i></div></div><div class="hud" id="am">30</div>
+ <button class="hb" id="bm">MIC ON</button><button class="hb" id="bl">LEAVE</button>
+ <div id="el">ELIMINATED - spectating</div>
+ <div class="zone" id="sl"></div><div class="zone" id="sr"></div>
+ <div class="base" id="b1"><div class="knob"></div></div><div class="base" id="b2"><div class="knob"></div></div>
+</div>
+
+<div id="res" class="scr">
+ <h2 id="rt">Match over</h2><div id="rl" style="display:flex;flex-direction:column;gap:8px"></div>
+ <div style="flex:1"></div><button class="b p" id="rb">BACK TO LOBBY</button>
+</div>
+<div id="toast"></div>
+
+<script src="peerjs.min.js"></script>
+<script>
+const AL="23456789ABCDEFGHJKMNPQRSTUVWXYZ",MAP=2000,SPD=150,$=s=>document.querySelector(s);
+const WALLS=[[900,700,200,40],[900,1260,200,40],[700,900,40,200],[1260,900,40,200],[400,400,160,40],[400,400,40,160],[1440,400,160,40],[1560,400,40,160],[400,1560,160,40],[400,1440,40,160],[1440,1560,160,40],[1560,1440,40,160],[1000,300,40,200],[1000,1500,40,200],[300,1000,200,40],[1500,1000,200,40]];
+const genCode=()=>Array.from({length:6},()=>AL[Math.random()*AL.length|0]).join("");
+const show=id=>document.querySelectorAll(".scr").forEach(e=>e.classList.toggle("on",e.id===id));
+const toast=t=>{const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",3500)};
+let peer,isHost=false,code="",myId="",hostId="",hostConn=null,conns={},calls={},names={},ids=[],stream=null,micOk=false,micOn=true;
+let G=null,V=null,myName="Player",net={tx:0,rx:0,ping:0},inp={mx:0,my:0,a:0,f:0};
+try{myName=localStorage.getItem("tc_name")||""}catch(e){}$("#nm").value=myName;
+const getName=()=>{myName=($("#nm").value.trim()||"Player"+(Math.random()*90+10|0));try{localStorage.setItem("tc_name",myName)}catch(e){}return myName};
+const send=(c,m)=>{try{c.send(m);net.tx+=JSON.stringify(m).length}catch(e){}};
+const bcast=m=>Object.values(conns).forEach(c=>send(c,m));
+
+// ---------- Voice (WebRTC audio via PeerJS) ----------
+async function initMic(){
+ if(stream)return;
+ try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});micOk=true}
+ catch(e){micOk=false;const c=new(window.AudioContext||window.webkitAudioContext)();stream=c.createMediaStreamDestination().stream;toast("Mic blocked: you can hear others but not talk. Allow it in Android Settings > Apps.")}
+ setMic()}
+function setMic(){if(stream&&micOk)stream.getAudioTracks().forEach(t=>t.enabled=micOn);const t=!micOk?"MIC: BLOCKED":micOn?"MIC: ON":"MIC: MUTED";$("#lmic").textContent=t;$("#bm").textContent=t.replace(":","")}
+function toggleMic(){if(!micOk){toast("Mic permission denied. Allow it in Android Settings.");return}micOn=!micOn;setMic()}
+function hookCall(id,c){calls[id]=c;
+ c.on("stream",s=>{let a=document.getElementById("a"+id);if(!a){a=document.createElement("audio");a.id="a"+id;a.autoplay=true;document.body.appendChild(a)}a.srcObject=s;a.play&&a.play().catch(()=>{})});
+ c.on("close",()=>{delete calls[id];const a=document.getElementById("a"+id);a&&a.remove()})}
+const callPeer=id=>{if(id&&id!==myId&&!calls[id])hookCall(id,peer.call(id,stream))};
+function wirePeer(){peer.on("call",c=>{c.answer(stream);hookCall(c.peer,c)});peer.on("disconnected",()=>{try{peer.reconnect()}catch(e){}})}
+
+// ---------- Room: host ----------
+async function createRoom(){
+ getName();await initMic();code=genCode();$("#msg").textContent="Creating room...";
+ peer=new Peer("tcode-"+code);wirePeer();
+ peer.on("open",id=>{myId=id;isHost=true;names={[id]:myName};$("#msg").textContent="";lobbyUI();show("lobby")});
+ peer.on("error",e=>{if(e.type==="unavailable-id"){peer.destroy();createRoom()}else fail(e)});
+ peer.on("connection",c=>{
+  c.on("data",d=>hostData(c,d));
+  c.on("close",()=>drop(c.peer))})}
+function hostData(c,d){net.rx+=JSON.stringify(d).length;
+ if(d.t==="hello"){
+  if(G&&!G.over)return send(c,{t:"x",m:"Match already started."});
+  if(Object.keys(conns).length>=7)return send(c,{t:"x",m:"Room is full."});
+  const others=Object.keys(conns);conns[c.peer]=c;names[c.peer]=String(d.name).slice(0,12);
+  send(c,{t:"w",others,host:myId});lobbyBcast()}
+ else if(d.t==="i"){if(G&&G.pl[c.peer])G.pl[c.peer].in=d}
+ else if(d.t==="p")send(c,{t:"q",ts:d.ts})}
+function drop(id){delete conns[id];delete names[id];calls[id]&&calls[id].close();
+ if(G&&!G.over&&G.pl[id]&&G.pl[id].al)kill(G.pl[id]);lobbyBcast()}
+function lobbyBcast(){bcast({t:"l",n:names});lobbyUI()}
+
+// ---------- Room: guest ----------
+async function joinRoom(c){
+ getName();await initMic();code=c;$("#msg").textContent="Connecting...";isHost=false;
+ peer=new Peer();wirePeer();let to=0;
+ peer.on("open",id=>{myId=id;hostId="tcode-"+code;const conn=peer.connect(hostId,{reliable:true});
+  to=setTimeout(()=>fail({type:"timeout"}),10000);
+  conn.on("open",()=>{clearTimeout(to);hostConn=conn;send(conn,{t:"hello",name:myName});setInterval(()=>{hostConn&&send(hostConn,{t:"p",ts:Date.now()})},2000)});
+  conn.on("data",guestData);conn.on("close",()=>{toast("Host left the room");leave()})});
+ peer.on("error",fail)}
+function guestData(d){net.rx+=JSON.stringify(d).length;
+ if(d.t==="w"){d.others.forEach(callPeer);callPeer(d.host);$("#msg").textContent="";show("lobby")}
+ else if(d.t==="l"){names=d.n;lobbyUI()}
+ else if(d.t==="x"){fail({type:"msg",message:d.m})}
+ else if(d.t==="s")applySnap(d)
+ else if(d.t==="st"){ids=d.ids;names=d.n;V={pl:{},bl:[],z:1000,t:0};show("game")}
+ else if(d.t==="e")showRes(d)
+ else if(d.t==="q")net.ping=Date.now()-d.ts}
+function fail(e){const m={"peer-unavailable":"Room not found. Check the code.",timeout:"No answer. Check the code and your connection.",network:"Cannot reach the connection service. Check internet (Practice works offline).","server-error":"Connection service unavailable.","socket-error":"Cannot reach the connection service.",msg:e.message}[e.type]||"Connection error: "+e.type;
+ $("#msg").textContent=m;toast(m);leave(true)}
+function leave(keepMsg){try{peer&&peer.destroy()}catch(e){}peer=null;conns={};hostConn=null;Object.values(calls).forEach(c=>c.close());calls={};document.querySelectorAll("audio").forEach(a=>a.remove());
+ clearInterval(loopI);G=null;V=null;isHost=false;if(!keepMsg)$("#msg").textContent="";show("menu")}
+
+// ---------- Lobby UI ----------
+function lobbyUI(){$("#lc").textContent=code.slice(0,3)+" "+code.slice(3);
+ $("#plist").innerHTML=Object.entries(names).map(([id,n])=>`<div class="pl"><b>${n.replace(/[<&]/g,"").charAt(0).toUpperCase()}</b><span>${n.replace(/[<&]/g,"")}</span><em>${id===myId?"you":""}${id===hostId||(isHost&&id===myId)?" host":""}</em></div>`).join("");
+ const go=$("#lgo");go.style.display="block";go.disabled=!isHost;go.textContent=isHost?(Object.keys(conns).length?"START MATCH":"START (with bots)"):"Waiting for host..."}
+$("#lcp").onclick=()=>{const t=code;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{const i=document.createElement("input");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");i.remove()}).finally(()=>toast("Code copied: "+t))};
+$("#lsh").onclick=()=>{const t="Join my TactiCode room: "+code;navigator.share?navigator.share({text:t}).catch(()=>{}):$("#lcp").click()};
+
+// ---------- Game simulation (host-authoritative) ----------
+let loopI=null,tick=0;
+function mkP(id,n,i,N,bot){const a=Math.PI*2*i/N;return{id,n,x:MAP/2+Math.cos(a)*780,y:MAP/2+Math.sin(a)*780,a:a+Math.PI,hp:100,am:30,rl:0,cd:0,k:0,al:true,bot,in:{mx:0,my:0,a:0,f:0}}}
+function startMatch(){
+ if(G&&!G.over)return;const hs=Object.keys(conns).concat(myId),bots=hs.length===1?3:0;ids=hs.slice();
+ for(let b=0;b<bots;b++){ids.push("bot"+b);names["bot"+b]="Bot "+(b+1)}
+ G={pl:{},bl:[],ids,z:1000,t:0,over:false,dead:[]};ids.forEach((id,i)=>G.pl[id]=mkP(id,names[id],i,ids.length,id.startsWith("bot")));
+ V=G;bcast({t:"st",ids,n:names});show("game");clearInterval(loopI);let last=performance.now();
+ loopI=setInterval(()=>{const n=performance.now(),dt=Math.min(.1,(n-last)/1000);last=n;if(!G||G.over)return;G.pl[myId].in=inp;step(dt);if(++tick%2===0)snap();if(G.over)finish()},33)}
+function kill(p,by){if(!p.al)return;p.al=false;p.hp=0;G.dead.push(p.id);if(by&&by!==p)by.k++}
+function wallPush(p,r){for(const w of WALLS){const cx=Math.max(w[0],Math.min(p.x,w[0]+w[2])),cy=Math.max(w[1],Math.min(p.y,w[1]+w[3])),dx=p.x-cx,dy=p.y-cy,d=Math.hypot(dx,dy);if(d<r){if(!d)p.y-=r;else{p.x+=dx/d*(r-d);p.y+=dy/d*(r-d)}}}}
+function botAI(p){let t=null,d=1e9;for(const q of Object.values(G.pl)){if(q===p||!q.al)continue;const dd=Math.hypot(q.x-p.x,q.y-p.y);if(dd<d){d=dd;t=q}}
+ if(!t){p.in={mx:0,my:0,a:p.a,f:0};return}const a=Math.atan2(t.y-p.y,t.x-p.x),near=d<220;
+ p.in={mx:near?-Math.cos(a)*.4+Math.cos(a+1.6)*.5:Math.cos(a),my:near?-Math.sin(a)*.4+Math.sin(a+1.6)*.5:Math.sin(a),a:a+(Math.random()-.5)*.3,f:d<450&&Math.random()<.55?1:0};
+ if(Math.hypot(p.x-1e3,p.y-1e3)>G.z-80){const b=Math.atan2(1e3-p.y,1e3-p.x);p.in.mx=Math.cos(b);p.in.my=Math.sin(b)}}
+function step(dt){G.t+=dt;G.z=Math.max(120,1000-G.t*6);
+ for(const p of Object.values(G.pl)){if(!p.al)continue;if(p.bot)botAI(p);const i=p.in;let mx=+i.mx||0,my=+i.my||0;const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
+  p.x=Math.max(12,Math.min(MAP-12,p.x+mx*SPD*dt));p.y=Math.max(12,Math.min(MAP-12,p.y+my*SPD*dt));wallPush(p,12);p.a=+i.a||0;
+  p.cd-=dt;if(p.rl>0){p.rl-=dt;if(p.rl<=0)p.am=30}
+  if(i.f&&p.cd<=0&&p.rl<=0){G.bl.push({x:p.x+Math.cos(p.a)*16,y:p.y+Math.sin(p.a)*16,vx:Math.cos(p.a)*520,vy:Math.sin(p.a)*520,o:p.id,l:.9});p.cd=.22;if(--p.am<=0)p.rl=1.5}
+  if(Math.hypot(p.x-1e3,p.y-1e3)>G.z){p.hp-=6*dt;if(p.hp<=0)kill(p)}}
+ G.bl=G.bl.filter(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt;b.l-=dt;if(b.l<=0)return false;
+  for(const w of WALLS)if(b.x>w[0]&&b.x<w[0]+w[2]&&b.y>w[1]&&b.y<w[1]+w[3])return false;
+  for(const p of Object.values(G.pl)){if(!p.al||p.id===b.o)continue;if(Math.hypot(p.x-b.x,p.y-b.y)<14){p.hp-=22;if(p.hp<=0)kill(p,G.pl[b.o]);return false}}return true});
+ if(Object.values(G.pl).filter(p=>p.al).length<=1)G.over=true}
+function snap(){bcast({t:"s",z:G.z|0,tm:G.t|0,p:G.ids.map(id=>{const p=G.pl[id];return[p.x|0,p.y|0,p.a*100|0,p.hp|0,p.k,p.al?1:0,p.am]}),b:G.bl.map(b=>[b.x|0,b.y|0])})}
+function applySnap(s){net.rx+=0;V.z=s.z;V.t=s.tm;s.p.forEach((a,i)=>{const id=ids[i];let q=V.pl[id];if(!q)q=V.pl[id]={x:a[0],y:a[1],n:names[id]};q.tx=a[0];q.ty=a[1];q.a=a[2]/100;q.hp=a[3];q.k=a[4];q.al=a[5];q.am=a[6]});V.bl=s.b.map(b=>({x:b[0],y:b[1]}))}
+function finish(){const al=G.ids.filter(i=>G.pl[i].al),order=al.concat(G.dead.slice().reverse()),m={t:"e",r:order.map(i=>[names[i]||"?",G.pl[i].k]),w:order[0]};bcast(m);showRes(m)}
+function showRes(m){clearInterval(loopI);show("res");$("#rt").textContent=m.w===myId?"Victory!":(m.r[0][0]+" wins");
+ $("#rl").innerHTML=m.r.map((r,i)=>`<div class="pl"><b>${i+1}</b><span>${String(r[0]).replace(/[<&]/g,"")}</span><em>${r[1]} kills</em></div>`).join("");G=isHost?null:G}
+
+// ---------- Input ----------
+function stick(el,base,cb){let id=null,ox=0,oy=0;const kn=base.firstChild;
+ const mv=e=>{let dx=e.clientX-ox,dy=e.clientY-oy;const l=Math.hypot(dx,dy);if(l>50){dx*=50/l;dy*=50/l}kn.style.transform=`translate(${dx}px,${dy}px)`;cb(dx/50,dy/50,1)};
+ el.addEventListener("pointerdown",e=>{if(id!==null)return;id=e.pointerId;el.setPointerCapture(id);ox=e.clientX;oy=e.clientY;base.style.cssText=`display:block;left:${ox-50}px;top:${oy-50}px`;mv(e)});
+ el.addEventListener("pointermove",e=>{if(e.pointerId===id)mv(e)});
+ const end=e=>{if(e.pointerId===id){id=null;base.style.display="none";kn.style.transform="";cb(0,0,0)}};el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end)}
+stick($("#sl"),$("#b1"),(x,y)=>{inp.mx=+x.toFixed(2);inp.my=+y.toFixed(2)});
+stick($("#sr"),$("#b2"),(x,y,on)=>{if(on&&Math.hypot(x,y)>.25){inp.a=+Math.atan2(y,x).toFixed(2);inp.f=1}else inp.f=0});
+const K={};addEventListener("keydown",e=>{K[e.key.toLowerCase()]=1;kb()});addEventListener("keyup",e=>{K[e.key.toLowerCase()]=0;kb()});
+function kb(){inp.mx=(K.d||K.arrowright?1:0)-(K.a||K.arrowleft?1:0);inp.my=(K.s||K.arrowdown?1:0)-(K.w||K.arrowup?1:0);if(K[" "])inp.f=1}
+$("#cv").addEventListener("pointermove",e=>{if(e.pointerType==="mouse")inp.a=+Math.atan2(e.clientY-innerHeight/2,e.clientX-innerWidth/2).toFixed(2)});
+$("#cv").addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")inp.f=1});addEventListener("pointerup",e=>{if(e.pointerType==="mouse")inp.f=0});
+setInterval(()=>{if(hostConn&&V&&!isHost&&$("#game").classList.contains("on"))send(hostConn,{t:"i",mx:inp.mx,my:inp.my,a:inp.a,f:inp.f})},66);
+
+// ---------- Rendering ----------
+const cv=$("#cv"),cx=cv.getContext("2d"),mc=$("#mm").getContext("2d");let W,H;
+const rs=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight};addEventListener("resize",rs);rs();
+function draw(){requestAnimationFrame(draw);if(!V||!$("#game").classList.contains("on"))return;
+ for(const q of Object.values(V.pl))if(q.tx!==undefined){q.x+=(q.tx-q.x)*.35;q.y+=(q.ty-q.y)*.35}
+ const m=V.pl[myId],f=(m&&m.al)?m:(Object.values(V.pl).find(p=>p.al)||m);if(!f)return;const sc=Math.max(.7,Math.min(1.2,Math.min(W,H)/520));
+ cx.fillStyle="#0B1220";cx.fillRect(0,0,W,H);cx.save();cx.translate(W/2,H/2);cx.scale(sc,sc);cx.translate(-f.x,-f.y);
+ cx.strokeStyle="rgba(51,65,85,.4)";cx.lineWidth=1;cx.beginPath();for(let i=0;i<=MAP;i+=100){cx.moveTo(i,0);cx.lineTo(i,MAP);cx.moveTo(0,i);cx.lineTo(MAP,i)}cx.stroke();
+ cx.strokeStyle="#334155";cx.lineWidth=4;cx.strokeRect(0,0,MAP,MAP);
+ cx.fillStyle="rgba(239,68,68,.16)";cx.beginPath();cx.rect(-500,-500,MAP+1e3,MAP+1e3);cx.arc(1e3,1e3,V.z,0,7);cx.fill("evenodd");cx.strokeStyle="#EF4444";cx.lineWidth=3;cx.beginPath();cx.arc(1e3,1e3,V.z,0,7);cx.stroke();
+ cx.fillStyle="#273449";cx.strokeStyle="#475569";cx.lineWidth=2;WALLS.forEach(w=>{cx.fillRect(...w);cx.strokeRect(...w)});
+ cx.fillStyle="#F59E0B";V.bl.forEach(b=>{cx.beginPath();cx.arc(b.x,b.y,4,0,7);cx.fill()});
+ for(const [id,p] of Object.entries(V.pl)){if(!p.al)continue;const me=id===myId;cx.fillStyle=me?"#10B981":"#EF4444";cx.beginPath();cx.arc(p.x,p.y,12,0,7);cx.fill();
+  cx.strokeStyle="#F8FAFC";cx.lineWidth=3;cx.beginPath();cx.moveTo(p.x,p.y);cx.lineTo(p.x+Math.cos(p.a)*22,p.y+Math.sin(p.a)*22);cx.stroke();
+  cx.fillStyle="#273449";cx.fillRect(p.x-16,p.y-24,32,4);cx.fillStyle=p.hp>50?"#10B981":p.hp>25?"#F59E0B":"#EF4444";cx.fillRect(p.x-16,p.y-24,32*Math.max(0,p.hp)/100,4);
+  cx.fillStyle="#F8FAFC";cx.font="11px system-ui";cx.textAlign="center";cx.fillText(names[id]||"",p.x,p.y-30)}
+ cx.restore();
+ mc.clearRect(0,0,96,96);const k=96/MAP;mc.strokeStyle="#EF4444";mc.beginPath();mc.arc(48,48,V.z*k,0,7);mc.stroke();
+ for(const [id,p] of Object.entries(V.pl)){if(!p.al)continue;mc.fillStyle=id===myId?"#10B981":"#EF4444";mc.beginPath();mc.arc(p.x*k,p.y*k,id===myId?3.5:2.5,0,7);mc.fill()}
+ const left=Math.max(0,(1e3-120)/6-V.t)|0;$("#zt").textContent="ZONE "+(left/60|0)+":"+String(left%60).padStart(2,"0");
+ if(m){$("#hp").firstChild.nodeValue="HP "+Math.max(0,m.hp|0);$("#hp i").style.width=Math.max(0,m.hp)+"%";$("#am").textContent=m.rl>0?"RELOAD":m.am;$("#am").style.color=m.am<=8?"#F59E0B":"#F8FAFC";$("#el").style.display=m.al?"none":"block"}
+ $("#nt").innerHTML=(isHost?"HOST":net.ping+" ms")+"<br>DATA "+((net.tx+net.rx)/1024).toFixed(1)+" KB"}
+draw();
+
+// ---------- Wiring ----------
+$("#cd").oninput=e=>e.target.value=e.target.value.toUpperCase().split("").filter(c=>AL.includes(c)).join("").slice(0,6);
+$("#bj").onclick=()=>{const c=$("#cd").value;if(c.length!==6){$("#msg").textContent="Enter the 6-character code.";return}joinRoom(c)};
+$("#bc").onclick=createRoom;
+$("#bp").onclick=()=>{getName();myId="me";isHost=true;names={me:myName};conns={};startMatch()};
+$("#lgo").onclick=startMatch;$("#llv").onclick=()=>leave();$("#lmic").onclick=toggleMic;$("#bm").onclick=toggleMic;
+$("#bl").onclick=()=>{if(confirm("Leave the match?"))leave()};
+$("#rb").onclick=()=>{if(isHost&&myId==="me")return leave();G=null;V=null;if(peer){lobbyUI();show("lobby")}else leave()};
+</script></body></html>
